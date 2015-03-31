@@ -1,3 +1,4 @@
+[![GoDoc](https://godoc.org/github.com/alexurquhart/qapi?status.svg)](https://godoc.org/github.com/alexurquhart/qapi)
 #qapi
 
 qapi is an abstraction over the [Questrade REST API](http://www.questrade.com/api/documentation/getting-started), written in Go.
