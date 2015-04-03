@@ -1,6 +1,7 @@
 package qapi
 
 const loginServerURL = "https://login.questrade.com/oauth2/"
+const practiceLoginServerURL = "https://practicelogin.questrade.com/oauth2/"
 
 type LoginCredentials struct {
 	AccessToken  string `json:"access_token"`

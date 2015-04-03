@@ -43,11 +43,17 @@ func (c *Client) get(endpoint string, out interface{}, query url.Values) error {
 
 // Login takes the refresh token from the client login credentials
 // and exchanges it for an access token. Returns a timer that
-// expires when the login session is over.
+// expires when the login session is over. If the practice flag is
+// true, then the client will log into the practice server.
 // TODO - Return a proper error when login fails with HTTP 400 - Bad Request
-func (c *Client) Login() error {
+func (c *Client) Login(practice bool) error {
+	login := loginServerURL
+	if practice {
+		login = practiceLoginServerURL
+	}
+
 	vars := url.Values{"grant_type": {"refresh_token"}, "refresh_token": {c.Credentials.RefreshToken}}
-	res, err := c.httpClient.PostForm(loginServerURL+"token", vars)
+	res, err := c.httpClient.PostForm(login+"token", vars)
 
 	if err != nil {
 		return err
@@ -58,7 +64,7 @@ func (c *Client) Login() error {
 		return err
 	}
 
-	c.SessionTimer = time.NewTimer(time.Duration(c.Credentials.ExpiresIn) * time.Minute)
+	c.SessionTimer = time.NewTimer(time.Duration(c.Credentials.ExpiresIn) * time.Second)
 
 	return nil
 }
@@ -357,10 +363,11 @@ func (c *Client) GetCandles(id int, start time.Time, end time.Time, interval str
 	return r.Candles, nil
 }
 
-// NewClient is the factory function for clients - takes a refresh token and logs in.
-func NewClient(refreshToken string) (*Client, error) {
+// NewClient is the factory function for clients - takes a refresh token and logs into
+// either the practice or live server.
+func NewClient(refreshToken string, practice bool) (*Client, error) {
 	transport := &http.Transport{
-		ResponseHeaderTimeout: 2 * time.Second,
+		ResponseHeaderTimeout: 5 * time.Second,
 	}
 
 	client := &http.Client{
@@ -376,7 +383,7 @@ func NewClient(refreshToken string) (*Client, error) {
 		transport:  transport,
 	}
 
-	err := c.Login()
+	err := c.Login(practice)
 	if err != nil {
 		return nil, err
 	}
