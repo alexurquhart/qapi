@@ -46,6 +46,12 @@ fmt.Printf(“AAPL Bid Price: $%.2f\n”, quote.BidPrice)
 // We’re done with the application forever - deauthorize the API key
 client.RevokeAuth()
 ```
+For an example program that uses this library check out my [S&P 500 candlestick data scraping program](https://github.com/alexurquhart/sp500scraper)
+
+##TODO
+- Finish writing POST/PUT/DELETE methods for manipulating orders.
+- Start writing tests.
+- Improve error handling
 
 ##Disclaimer
 **NOTE** - This library is not endorsed or supported by Questrade in any way, shape or form. This library is released under the MIT License.
