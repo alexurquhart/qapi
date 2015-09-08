@@ -136,3 +136,97 @@ type Order struct {
 	// Bracket Order class. Primary, Profit or Loss.
 	OrderClass string `json:"orderClass"`
 }
+
+// Ref: http://www.questrade.com/api/documentation/rest-operations/order-calls/accounts-id-orders
+type OrderRequest struct {
+	// Account number against which order is being submitted.
+	AccountID string `json:"id"`
+
+	// Optional – order id of the order to be replaced.
+	OrderID int `json:"orderId,omitempty"`
+
+	// Internal symbol identifier.
+	SymbolID int `json:"symbolId"`
+
+	// Order quantity.
+	Quantity int `json:"quantity"`
+
+	// Iceberg instruction quantity.
+	IcebergQuantity int `json:"icebergQuantity"`
+
+	//  Limit price.
+	LimitPrice float32 `json:"limitPrice"`
+
+	//  Stop price.
+	StopPrice float32 `json:"stopPrice"`
+
+	// Identifies whether the all-or-none instruction is enabled.
+	IsAllOrNone bool `json:"isAllOrNone"`
+
+	// Identifies whether the anonymous instruction is enabled.
+	IsAnonymous bool `json:"isAnonymous"`
+
+	// Order type (e.g., "Market").
+	OrderType string `json:"orderType"`
+
+	// Order side (e.g., "Buy").
+	Action string `json:"action"`
+
+	// Secondary order route (e.g., "NYSE").
+	SecondaryRoute string `json:"secondaryRoute"`
+
+	// Primary order route (e.g., "AUTO").
+	PrimaryRoute string `json:"primaryRoute"`
+}
+
+// Converts the order request to a url.Values{} map
+// func (o OrderRequest) toURLMap() url.Values {
+// 	v := url.Values{}
+
+// 	v.Set("id", o.AccountID)
+
+// 	if o.OrderID != 0 {
+// 		v.Set("orderId", strconv.Itoa(o.OrderID))
+// 	}
+
+// 	v.Set("symbolId", strconv.Itoa(o.SymbolID))
+// 	v.Set("quantity", strconv.Itoa(o.Quantity))
+// 	v.Set("icebergQuantity", strconv.Itoa(o.IcebergQuantity))
+// 	v.Set("limitPrice", strconv.FormatFloat(float64(o.LimitPrice), 'f', 2, 32))
+// 	v.Set("stopPrice", strconv.FormatFloat(float64(o.StopPrice), 'f', 2, 32))
+// 	v.Set("isAllOrNone", strconv.FormatBool(o.IsAllOrNone))
+// 	v.Set("isAnonymous", strconv.FormatBool(o.IsAnonymous))
+// 	v.Set("orderType", o.OrderType)
+// 	v.Set("action", o.Action)
+// 	v.Set("primaryRoute", o.PrimaryRoute)
+// 	v.Set("secondaryRoute", o.SecondaryRoute)
+
+// 	return v
+// }
+
+// Ref: http://www.questrade.com/api/documentation/rest-operations/order-calls/accounts-id-orders-impact
+type OrderImpact struct {
+	// Estimate of commissions to be charged on the order.
+	EstimatedCommissions float32 `json:"estimatedCommissions"`
+
+	// Estimate of change in buying power from the order.
+	BuyingPowerEffect float32 `json:"buyingPowerEffect"`
+
+	// Estimate of buying power in which order will result.
+	BuyingPowerResult float32 `json:"buyingPowerResult"`
+
+	// Estimate of change in maintenance excess from the order.
+	MaintExcessEffect float32 `json:"maintExcessEffect"`
+
+	// Estimate of maintenance excess in which the order will result.
+	MaintExcessResult float32 `json:"maintExcessResult"`
+
+	// Client view of the order side (e.g., "Buy-To-Open").
+	Side string `json:"side"`
+
+	// Estimate of the order execution value.
+	TradeValueCalculation string `json:"tradeValueCalculation"`
+
+	// Estimated average fill price.
+	Price float32 `json:"price"`
+}

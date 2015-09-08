@@ -5,6 +5,8 @@
 package qapi
 
 import (
+	"bytes"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"io/ioutil"
@@ -38,7 +40,32 @@ func (c *Client) get(endpoint string, out interface{}, query url.Values) error {
 		return err
 	}
 	return nil
+}
 
+func (c *Client) post(endpoint string, out interface{}, body interface{}) error {
+	// Attempt to marshall the body as JSON
+	json, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+
+	req, err := http.NewRequest("POST", c.Credentials.ApiServer+endpoint, bytes.NewBuffer(json))
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Authorization", c.Credentials.authHeader())
+
+	res, err := c.httpClient.Do(req)
+
+	err = processResponse(res, out)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *Client) delete(endpoint string, out interface{}, query url.Values) error {
+	return nil
 }
 
 // Login takes the refresh token from the client login credentials
@@ -341,6 +368,21 @@ func (c *Client) GetQuotes(ids ...int) ([]Quote, error) {
 	}
 
 	return q.Quotes, nil
+}
+
+// GetOrderImpact calculates the impact that a given order will have on an
+// account without placing it.
+// See: http://www.questrade.com/api/documentation/rest-operations/order-calls/accounts-id-orders-impact
+func (c *Client) GetOrderImpact(req OrderRequest) (OrderImpact, error) {
+	// Construct the endpoint - will be different if the impact is being calculated on
+	// an order that already exists
+	endpoint := fmt.Sprintf("v1/accounts/%d/orders/", req.AccountID)
+	if req.OrderID != 0 {
+		endpoint += fmt.Sprintf("%d/", req.OrderID)
+	}
+	endpoint += "impact"
+
+	return OrderImpact{}, nil
 }
 
 // GetCandles retrieves historical market data between the start and end dates,
