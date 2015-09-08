@@ -26,6 +26,7 @@ type Client struct {
 	transport    *http.Transport
 }
 
+// Send an HTTP GET request, and return the processed response
 func (c *Client) get(endpoint string, out interface{}, query url.Values) error {
 	req, err := http.NewRequest("GET", c.Credentials.ApiServer+endpoint+query.Encode(), nil)
 	if err != nil {
@@ -42,6 +43,7 @@ func (c *Client) get(endpoint string, out interface{}, query url.Values) error {
 	return nil
 }
 
+// Format the message body, send an HTTP POST request, and return the processed response
 func (c *Client) post(endpoint string, out interface{}, body interface{}) error {
 	// Attempt to marshall the body as JSON
 	json, err := json.Marshal(body)
@@ -376,13 +378,19 @@ func (c *Client) GetQuotes(ids ...int) ([]Quote, error) {
 func (c *Client) GetOrderImpact(req OrderRequest) (OrderImpact, error) {
 	// Construct the endpoint - will be different if the impact is being calculated on
 	// an order that already exists
-	endpoint := fmt.Sprintf("v1/accounts/%d/orders/", req.AccountID)
+	endpoint := fmt.Sprintf("v1/accounts/%s/orders/", req.AccountID)
 	if req.OrderID != 0 {
 		endpoint += fmt.Sprintf("%d/", req.OrderID)
 	}
 	endpoint += "impact"
 
-	return OrderImpact{}, nil
+	var impact OrderImpact
+	err := c.post(endpoint, &impact, req)
+	if err != nil {
+		return OrderImpact{}, err
+	}
+	
+	return impact, nil
 }
 
 // GetCandles retrieves historical market data between the start and end dates,

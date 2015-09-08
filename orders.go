@@ -8,7 +8,7 @@ import (
 type OrderLeg struct {
 }
 
-// Ref: http://www.questrade.com/api/documentation/rest-operations/account-calls/accounts-id-orders
+// Ref: http://www.questrade.com/api/documentSymation/rest-operations/account-calls/accounts-id-orders
 type Order struct {
 	// Internal order identifier.
 	ID int `json:"id"`
@@ -140,7 +140,7 @@ type Order struct {
 // Ref: http://www.questrade.com/api/documentation/rest-operations/order-calls/accounts-id-orders
 type OrderRequest struct {
 	// Account number against which order is being submitted.
-	AccountID string `json:"id"`
+	AccountID string `json:"accountNumber"`
 
 	// Optional – order id of the order to be replaced.
 	OrderID int `json:"orderId,omitempty"`
@@ -152,19 +152,23 @@ type OrderRequest struct {
 	Quantity int `json:"quantity"`
 
 	// Iceberg instruction quantity.
-	IcebergQuantity int `json:"icebergQuantity"`
+	IcebergQuantity int `json:"icebergQuantity,omitempty"`
 
-	//  Limit price.
-	LimitPrice float32 `json:"limitPrice"`
+	// Limit price.
+	LimitPrice float32 `json:"limitPrice,omitempty"`
 
-	//  Stop price.
-	StopPrice float32 `json:"stopPrice"`
+	// Stop price.
+	StopPrice float32 `json:"stopPrice,omitempty"`
+	
+	TimeInForce string `json:"timeInForce"`
 
 	// Identifies whether the all-or-none instruction is enabled.
 	IsAllOrNone bool `json:"isAllOrNone"`
 
 	// Identifies whether the anonymous instruction is enabled.
 	IsAnonymous bool `json:"isAnonymous"`
+	
+	IsLimitOffsetInDollar bool `json:"isLimitOffsetInDollar"`
 
 	// Order type (e.g., "Market").
 	OrderType string `json:"orderType"`
@@ -178,31 +182,6 @@ type OrderRequest struct {
 	// Primary order route (e.g., "AUTO").
 	PrimaryRoute string `json:"primaryRoute"`
 }
-
-// Converts the order request to a url.Values{} map
-// func (o OrderRequest) toURLMap() url.Values {
-// 	v := url.Values{}
-
-// 	v.Set("id", o.AccountID)
-
-// 	if o.OrderID != 0 {
-// 		v.Set("orderId", strconv.Itoa(o.OrderID))
-// 	}
-
-// 	v.Set("symbolId", strconv.Itoa(o.SymbolID))
-// 	v.Set("quantity", strconv.Itoa(o.Quantity))
-// 	v.Set("icebergQuantity", strconv.Itoa(o.IcebergQuantity))
-// 	v.Set("limitPrice", strconv.FormatFloat(float64(o.LimitPrice), 'f', 2, 32))
-// 	v.Set("stopPrice", strconv.FormatFloat(float64(o.StopPrice), 'f', 2, 32))
-// 	v.Set("isAllOrNone", strconv.FormatBool(o.IsAllOrNone))
-// 	v.Set("isAnonymous", strconv.FormatBool(o.IsAnonymous))
-// 	v.Set("orderType", o.OrderType)
-// 	v.Set("action", o.Action)
-// 	v.Set("primaryRoute", o.PrimaryRoute)
-// 	v.Set("secondaryRoute", o.SecondaryRoute)
-
-// 	return v
-// }
 
 // Ref: http://www.questrade.com/api/documentation/rest-operations/order-calls/accounts-id-orders-impact
 type OrderImpact struct {

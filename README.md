@@ -14,8 +14,8 @@ again after the current session expires. See http://www.questrade.com/api/docume
 
 ##Usage
 ```go
-// Create a new client
-client, err := qapi.NewClient(“< REFRESH TOKEN >”)
+// Create a new client on the practice server
+client, err := qapi.NewClient(“< REFRESH TOKEN >”, true)
 
 // Get accounts
 userId, accts, err := client.GetAccounts()
@@ -43,6 +43,22 @@ for r := range results {
 quote, err := client.GetQuote(symId)
 fmt.Printf(“AAPL Bid Price: $%.2f\n”, quote.BidPrice)
 
+// Create an order request
+req := qapi.OrderRequest{
+    AccountID: accts[0].Number,
+    SymbolID: symId,
+    Quantity: 10,
+    OrderType: "Market",
+    TimeInForce: "Day",
+    Action: "Buy",
+    PrimaryRoute: "AUTO",
+    SecondaryRoute: "AUTO",
+}
+
+// Get the impact the order will have on your selected account
+impact, err := client.GetOrderImpact(req)
+fmt.Printf("Buying power effect: $%.2f\n", impact.BuyingPowerEffect)
+    
 // We’re done with the application forever - deauthorize the API key
 client.RevokeAuth()
 ```
