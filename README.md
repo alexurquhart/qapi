@@ -63,7 +63,7 @@ fmt.Printf("Buying power effect: $%.2f\n", impact.BuyingPowerEffect)
 
 // Place the order and print the OrderID
 orders, err := client.PlaceOrder(req)
-fmt.Printf("Order ID: %d", orders[0].ID")
+fmt.Printf("Order ID: %d", orders[0].ID)
     
 // Delete the order
 err :- client.DeleteOrder(req.AccountID, orders[0].ID)
