@@ -68,17 +68,13 @@ func (c *Client) post(endpoint string, out interface{}, body interface{}) error 
 	return nil
 }
 
-func (c *Client) delete(endpoint string, out interface{}, query url.Values) error {
-	return nil
-}
-
-// processResponse takes the body of a response, and either returns
+// processResponse takes the body of an HTTP response, and either returns
 // the error code, or unmarshalls the JSON response, extracts
-// rate limit info, and places it into the client object
+// rate limit info, and places it into the object
 // output parameter. This function closes the response body after reading it.
 func (c *Client) processResponse(res *http.Response, out interface{}) error {
-	defer res.Body.Close()
 	body, err := ioutil.ReadAll(res.Body)
+	res.Body.Close()
 	if err != nil {
 		return err
 	}
@@ -231,6 +227,7 @@ func (c *Client) GetExecutions(number string, start time.Time, end time.Time) ([
 // If the times are zero-value, then the API will default the start and end times to the beginning
 // and end of the current day.
 // TODO - Verify order state enumeration in accordance with API docs
+// See: http://www.questrade.com/api/documentation/rest-operations/account-calls/accounts-id-orders
 func (c *Client) GetOrders(number string, start time.Time, end time.Time, state string) ([]Order, error) {
 	// Format the times if they are not zero-values
 	params := url.Values{}
@@ -420,6 +417,50 @@ func (c *Client) GetOrderImpact(req OrderRequest) (OrderImpact, error) {
 	}
 
 	return impact, nil
+}
+
+// PlaceOrder submits an order request, or an update to an existing order to Questrade
+// See: http://www.questrade.com/api/documentation/rest-operations/order-calls/accounts-id-orders
+func (c *Client) PlaceOrder(req OrderRequest) ([]Order, error) {
+	// Construct the endpoint
+	endpoint := fmt.Sprintf("v1/accounts/%s/orders/", req.AccountID)
+	if req.OrderID != 0 {
+		endpoint += fmt.Sprintf("%d", req.OrderID)
+	}
+
+	res := struct {
+		OrderID int     `json:"orderId"`
+		Orders  []Order `json:"orders"`
+	}{}
+
+	err := c.post(endpoint, &res, req)
+	if err != nil {
+		return []Order{}, err
+	}
+	return res.Orders, nil
+}
+
+// DeleteOrder - Sends a delete request for the specified order
+// See: http://www.questrade.com/api/documentation/rest-operations/order-calls/accounts-id-orders-orderid
+func (c *Client) DeleteOrder(acctNum string, orderID int) error {
+	endpoint := fmt.Sprintf("accounts/%s/orders/%d", acctNum, orderID)
+	req, err := http.NewRequest("DELETE", c.Credentials.ApiServer+endpoint, nil)
+	if err != nil {
+		return err
+	}
+	req.Header.Add("Authorization", c.Credentials.authHeader())
+
+	res, err := c.httpClient.Do(req)
+
+	out := struct {
+		OrderID int `json:"OrderID"`
+	}{}
+
+	err = c.processResponse(res, out)
+	if err != nil {
+		return err
+	}
+	return nil
 }
 
 // GetCandles retrieves historical market data between the start and end dates,
