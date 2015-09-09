@@ -18,12 +18,14 @@ import (
 
 // A client is the structure that will be used to consume the API
 // endpoints. It holds the login credentials, http client/transport,
-// and the login session timer.
+// rate limit information, and the login session timer.
 type Client struct {
-	Credentials  LoginCredentials
-	SessionTimer *time.Timer
-	httpClient   *http.Client
-	transport    *http.Transport
+	Credentials        LoginCredentials
+	SessionTimer       *time.Timer
+	RateLimitRemaining int
+	RateLimitReset     time.Time
+	httpClient         *http.Client
+	transport          *http.Transport
 }
 
 // Send an HTTP GET request, and return the processed response
@@ -36,7 +38,7 @@ func (c *Client) get(endpoint string, out interface{}, query url.Values) error {
 
 	res, err := c.httpClient.Do(req)
 
-	err = processResponse(res, out)
+	err = c.processResponse(res, out)
 	if err != nil {
 		return err
 	}
@@ -59,7 +61,7 @@ func (c *Client) post(endpoint string, out interface{}, body interface{}) error 
 
 	res, err := c.httpClient.Do(req)
 
-	err = processResponse(res, out)
+	err = c.processResponse(res, out)
 	if err != nil {
 		return err
 	}
@@ -67,6 +69,33 @@ func (c *Client) post(endpoint string, out interface{}, body interface{}) error 
 }
 
 func (c *Client) delete(endpoint string, out interface{}, query url.Values) error {
+	return nil
+}
+
+// processResponse takes the body of a response, and either returns
+// the error code, or unmarshalls the JSON response, extracts
+// rate limit info, and places it into the client object
+// output parameter. This function closes the response body after reading it.
+func (c *Client) processResponse(res *http.Response, out interface{}) error {
+	defer res.Body.Close()
+	body, err := ioutil.ReadAll(res.Body)
+	if err != nil {
+		return err
+	}
+
+	if res.StatusCode != 200 {
+		return newQuestradeError(res, body)
+	}
+
+	err = json.Unmarshal(body, out)
+	if err != nil {
+		return err
+	}
+
+	reset, _ := strconv.Atoi(res.Header.Get("X-RateLimit-Reset"))
+	c.RateLimitReset = time.Unix(int64(reset), 0)
+	c.RateLimitRemaining, _ = strconv.Atoi(res.Header.Get("X-RateLimit-Remaining"))
+
 	return nil
 }
 
@@ -88,7 +117,7 @@ func (c *Client) Login(practice bool) error {
 		return err
 	}
 
-	err = processResponse(res, &c.Credentials)
+	err = c.processResponse(res, &c.Credentials)
 	if err != nil {
 		return err
 	}
@@ -389,7 +418,7 @@ func (c *Client) GetOrderImpact(req OrderRequest) (OrderImpact, error) {
 	if err != nil {
 		return OrderImpact{}, err
 	}
-	
+
 	return impact, nil
 }
 

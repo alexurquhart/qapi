@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.org/alexurquhart/qapi.svg?branch=master)](https://travis-ci.org/alexurquhart/qapi)
 [![GoDoc](https://godoc.org/github.com/alexurquhart/qapi?status.svg)](https://godoc.org/github.com/alexurquhart/qapi)
 #qapi
 

@@ -1,38 +1,39 @@
 package qapi
 
 import (
+	"encoding/json"
 	"fmt"
 	"net/http"
-	"strconv"
-	"time"
 )
 
 type QuestradeError struct {
-	Code               int `json:"code",string`
-	StatusCode         int
-	Message            string `json:"message"`
-	Endpoint           string
-	OrderId            int     `json:"orderId"`
-	Orders             []Order `json:"orders"`
-	RateLimitRemaining int
-	RateLimitReset     time.Time
+	Code       int `json:"code",string`
+	StatusCode int
+	Message    string `json:"message"`
+	Endpoint   string
+	OrderId    int     `json:"orderId,omitempty"`
+	Orders     []Order `json:"orders,omitempty"`
 }
 
-// TODO - Parse rate limits out of response
 func newQuestradeError(res *http.Response, body []byte) QuestradeError {
-	reset, _ := strconv.Atoi(res.Header.Get("X-RateLimit-Reset"))
-	resetDate := time.Unix(int64(reset), 0)
-	remaining, _ := strconv.Atoi(res.Header.Get("X-RateLimit-Remaining"))
-
-	e := QuestradeError{
-		StatusCode:         res.StatusCode,
-		Endpoint:           res.Request.URL.String(),
-		RateLimitRemaining: remaining,
-		RateLimitReset:     resetDate,
+	// Unmarshall the error text
+	var e QuestradeError
+	err := json.Unmarshal(body, &e)
+	if err != nil {
+		return QuestradeError{
+			Code:       -999,
+			Message:    "Error unmarshalling error message from Questrade",
+			StatusCode: res.StatusCode,
+			Endpoint:   res.Request.URL.String(),
+		}
 	}
+
+	e.StatusCode = res.StatusCode
+	e.Endpoint = res.Request.URL.String()
+
 	return e
 }
 
 func (q QuestradeError) Error() string {
-	return fmt.Sprintf("%d %s [%d] - %s", q.StatusCode, q.Endpoint, q.Code, q.Message)
+	return fmt.Sprintf("HTTP %d - %s [%d] - %s", q.StatusCode, q.Endpoint, q.Code, q.Message)
 }

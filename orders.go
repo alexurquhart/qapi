@@ -159,7 +159,7 @@ type OrderRequest struct {
 
 	// Stop price.
 	StopPrice float32 `json:"stopPrice,omitempty"`
-	
+
 	TimeInForce string `json:"timeInForce"`
 
 	// Identifies whether the all-or-none instruction is enabled.
@@ -167,7 +167,7 @@ type OrderRequest struct {
 
 	// Identifies whether the anonymous instruction is enabled.
 	IsAnonymous bool `json:"isAnonymous"`
-	
+
 	IsLimitOffsetInDollar bool `json:"isLimitOffsetInDollar"`
 
 	// Order type (e.g., "Market").
