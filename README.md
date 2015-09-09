@@ -49,7 +49,8 @@ req := qapi.OrderRequest{
     AccountID: accts[0].Number,
     SymbolID: symId,
     Quantity: 10,
-    OrderType: "Market",
+    OrderType: "Limit",
+    LimitPrice: 10.00,
     TimeInForce: "Day",
     Action: "Buy",
     PrimaryRoute: "AUTO",
@@ -59,16 +60,22 @@ req := qapi.OrderRequest{
 // Get the impact the order will have on your selected account
 impact, err := client.GetOrderImpact(req)
 fmt.Printf("Buying power effect: $%.2f\n", impact.BuyingPowerEffect)
+
+// Place the order and print the OrderID
+orders, err := client.PlaceOrder(req)
+fmt.Printf("Order ID: %d", orders[0].ID")
     
+// Delete the order
+err :- client.DeleteOrder(req.AccountID, orders[0].ID)
+
 // We’re done with the application forever - deauthorize the API key
 client.RevokeAuth()
 ```
 For an example program that uses this library check out my [S&P 500 candlestick data scraping program](https://github.com/alexurquhart/sp500scraper)
 
 ##TODO
-- Finish writing POST/PUT/DELETE methods for manipulating orders.
 - Start writing tests.
-- Improve error handling
+- Verify some of the enumerations in the API responses - some of them on the documentation site appears incomplete
 
 ##Disclaimer
 **NOTE** - This library is not endorsed or supported by Questrade in any way, shape or form. This library is released under the MIT License.
