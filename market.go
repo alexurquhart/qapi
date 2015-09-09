@@ -5,7 +5,6 @@ import (
 )
 
 // Detailed information about a symbol
-//
 // Ref: http://www.questrade.com/api/documentation/rest-operations/market-calls/symbols-id
 type Symbol struct {
 
@@ -114,7 +113,6 @@ type MinTickData struct {
 }
 
 // Symbol information retreived from search results
-//
 // Ref: http://www.questrade.com/api/documentation/rest-operations/market-calls/symbols-search
 type SymbolSearchResult struct {
 	Symbol          string `json:"symbol"`
@@ -149,7 +147,8 @@ type ChainPerRoot struct {
 	Multiplier int `json:"multiplier"`
 }
 
-// Option Chain - www.questrade.com/api/documentation/rest-operations/market-calls/symbols-id-options
+// Option Chain
+// Ref: www.questrade.com/api/documentation/rest-operations/market-calls/symbols-id-options
 type OptionChain struct {
 	// Option expiry date.
 	ExpiryDate time.Time `json:"expiryDate"`
