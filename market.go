@@ -211,10 +211,10 @@ type Market struct {
 // Quote represents a Lvl 1 market data quote for a particular symbol
 type Quote struct {
 	// Symbol name following Questrade’s symbology.
-	Symbol int `json:"symbol"`
+	Symbol string `json:"symbol"`
 
 	// Internal symbol identifier.
-	SymbolID string `json:"symbolId"`
+	SymbolID int `json:"symbolId"`
 
 	// Market tier.
 	Tier string `json:"tier"`
@@ -243,6 +243,9 @@ type Quote struct {
 	// Trade direction.
 	LastTradeTick string `json:"lastTradeTick"`
 
+	// Timestamp
+	LastTtradeTime string `json:"lastTradeTime"`
+
 	// Volume.
 	Volume int `json:"volume"`
 
@@ -256,7 +259,7 @@ type Quote struct {
 	LowPrice float32 `json:"lowPrice"`
 
 	// Whether a quote is delayed (true) or real-time.
-	Delay bool `json:"delay"`
+	Delay int `json:"delay"`
 
 	// Whether trading in the symbol is currently halted.
 	IsHalted bool `json:"isHalted"`
