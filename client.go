@@ -354,17 +354,17 @@ func (c *Client) GetMarkets() ([]Market, error) {
 func (c *Client) GetQuote(id int) (Quote, error) {
 	idStr := strconv.Itoa(id)
 
-	params := url.Values{}
-	params.Add("ids", idStr)
-
 	q := struct {
 		Quotes []Quote `json:"quotes"`
 	}{}
+	//var q2 json.RawMessage
 
-	err := c.get("v1/symbols/quotes?", &q, params)
+	err := c.get("v1/markets/quotes/"+idStr, &q, url.Values{})
 	if err != nil {
 		return Quote{}, err
 	}
+
+	//fmt.Println("RESULT:", string(q2))
 
 	if len(q.Quotes) != 1 {
 		return Quote{}, errors.New("Error: Could not retreive quotes")
@@ -390,7 +390,7 @@ func (c *Client) GetQuotes(ids ...int) ([]Quote, error) {
 		Quotes []Quote `json:"quotes"`
 	}{}
 
-	err := c.get("v1/symbols/quotes?", &q, params)
+	err := c.get("v1/markets/quotes?", &q, params)
 	if err != nil {
 		return []Quote{}, err
 	}
