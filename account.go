@@ -10,7 +10,7 @@ import (
 // Ref: http://www.questrade.com/api/documentation/rest-operations/account-calls/accounts
 type Account struct {
 	// Type of the account (e.g., "Cash", "Margin").
-	Type string `json":"type""`
+	Type string `json:"type"`
 
 	// Eight-digit account number (e.g., "26598145")
 	// Stored as a string, it's used for making account-related API calls
