@@ -16,7 +16,7 @@ again after the current session expires. See http://www.questrade.com/api/docume
 ##Usage
 ```go
 // Create a new client on the practice server
-client, err := qapi.NewClient(“< REFRESH TOKEN >”, true)
+client, err := qapi.NewClient("< REFRESH TOKEN >", true)
 
 // Get accounts
 userId, accts, err := client.GetAccounts()
@@ -25,16 +25,16 @@ userId, accts, err := client.GetAccounts()
 balances, err := client.GetBalances(accts[0].Number)
 
 // Print the market value of the combined balances
-for b := range balances.CombinedBalances {
-    fmt.Printf(“Market Value: $%.2f %s\n”, b.MarketValue, b.Currency)
+for _, b := range balances.CombinedBalances {
+    fmt.Printf("Market Value: $%.2f %s\n", b.MarketValue, b.Currency)
 }
 
 // To get a quote the API uses internal symbol ID’s.
-results, err := client.SearchSymbols(“AAPL”, 0)
+results, err := client.SearchSymbols("AAPL", 0)
 
 var symId int
-for r := range results {
-    if r.Symbol == “AAPL” && r.ListingExchange == “NASDAQ” {
+for _, r := range results {
+    if r.Symbol == "AAPL" && r.ListingExchange == "NASDAQ" {
         symId = r.SymbolID
         break
     }
@@ -42,7 +42,7 @@ for r := range results {
 
 // Get a real-time quote - qapi supports getting quotes of multiple symbols with GetQuotes()
 quote, err := client.GetQuote(symId)
-fmt.Printf(“AAPL Bid Price: $%.2f\n”, quote.BidPrice)
+fmt.Printf("AAPL Bid Price: $%.2f\n", quote.BidPrice)
 
 // Create an order request
 req := qapi.OrderRequest{
