@@ -20,12 +20,8 @@ func newQuestradeError(res *http.Response, body []byte) QuestradeError {
 	var e QuestradeError
 	err := json.Unmarshal(body, &e)
 	if err != nil {
-		return QuestradeError{
-			Code:       -999,
-			Message:    "Error unmarshalling error message from Questrade",
-			StatusCode: res.StatusCode,
-			Endpoint:   res.Request.URL.String(),
-		}
+		e.Code = -999
+		e.Message = string(body)
 	}
 
 	e.StatusCode = res.StatusCode
@@ -35,5 +31,13 @@ func newQuestradeError(res *http.Response, body []byte) QuestradeError {
 }
 
 func (q QuestradeError) Error() string {
-	return fmt.Sprintf("HTTP %d - %s [%d] - %s", q.StatusCode, q.Endpoint, q.Code, q.Message)
+	return fmt.Sprintf("\nQuestradeError:\n" +
+	                   "\tStatus code: HTTP %d\n" +
+	                   "\tEndpoint: %s\n" +
+	                   "\tError code: %d\n" +
+	                   "\tMessage: %s\n",
+	                   q.StatusCode,
+	                   q.Endpoint,
+	                   q.Code,
+	                   q.Message)
 }
