@@ -7,8 +7,9 @@ package qapi
 import (
 	"bytes"
 	"encoding/json"
-	"errors"
 	"fmt"
+	"github.com/gorilla/websocket"
+	"github.com/pkg/errors"
 	"io/ioutil"
 	"net/http"
 	"net/url"
@@ -48,12 +49,12 @@ func (c *Client) get(endpoint string, out interface{}, query url.Values) error {
 // Format the message body, send an HTTP POST request, and return the processed response
 func (c *Client) post(endpoint string, out interface{}, body interface{}) error {
 	// Attempt to marshall the body as JSON
-	json, err := json.Marshal(body)
+	jsonBody, err := json.Marshal(body)
 	if err != nil {
 		return err
 	}
 
-	req, err := http.NewRequest("POST", c.Credentials.ApiServer+endpoint, bytes.NewBuffer(json))
+	req, err := http.NewRequest("POST", c.Credentials.ApiServer+endpoint, bytes.NewBuffer(jsonBody))
 	if err != nil {
 		return err
 	}
@@ -99,7 +100,6 @@ func (c *Client) processResponse(res *http.Response, out interface{}) error {
 // and exchanges it for an access token. Returns a timer that
 // expires when the login session is over. If the practice flag is
 // true, then the client will log into the practice server.
-// TODO - Return a proper error when login fails with HTTP 400 - Bad Request
 func (c *Client) Login(practice bool) error {
 	login := loginServerURL
 	if practice {
@@ -156,7 +156,7 @@ func (c *Client) RevokeAuth() error {
 // GetServerTime retrieves the current time on Questrade's server
 func (c *Client) GetServerTime() (time.Time, error) {
 	t := struct {
-		Time time.Time `json:"time",string`
+		Time time.Time `json:"time"`
 	}{}
 
 	err := c.get("v1/time", &t, url.Values{})
@@ -171,8 +171,8 @@ func (c *Client) GetServerTime() (time.Time, error) {
 // belonging to that user.
 func (c *Client) GetAccounts() (int, []Account, error) {
 	list := struct {
-		UserID   int       `json":"userId"`
-		Accounts []Account `json":"accounts"`
+		UserID   int       `json:"userId"`
+		Accounts []Account `json:"accounts"`
 	}{}
 
 	err := c.get("v1/accounts", &list, url.Values{})
@@ -367,14 +367,12 @@ func (c *Client) GetQuote(id int) (Quote, error) {
 	//fmt.Println("RESULT:", string(q2))
 
 	if len(q.Quotes) != 1 {
-		return Quote{}, errors.New("Error: Could not retreive quotes")
+		return Quote{}, errors.New("error: Could not retrieve quotes")
 	}
 	return q.Quotes[0], nil
 }
 
-// GetQuotes retrieves a single Level 1 market data quote for many symbols
-// TODO - Test
-func (c *Client) GetQuotes(ids ...int) ([]Quote, error) {
+func buildIdString(ids []int) string {
 	idStr := ""
 	for k, v := range ids {
 		idStr += strconv.Itoa(v)
@@ -383,8 +381,14 @@ func (c *Client) GetQuotes(ids ...int) ([]Quote, error) {
 		}
 	}
 
+	return idStr
+}
+
+// GetQuotes retrieves a single Level 1 market data quote for many symbols
+// TODO - Test
+func (c *Client) GetQuotes(ids []int) ([]Quote, error) {
 	params := url.Values{}
-	params.Add("ids", idStr)
+	params.Add("ids", buildIdString(ids))
 
 	q := struct {
 		Quotes []Quote `json:"quotes"`
@@ -473,7 +477,7 @@ func (c *Client) GetCandles(id int, start time.Time, end time.Time, interval str
 	params.Add("interval", interval)
 
 	r := struct {
-		Candles []Candlestick `json:candles`
+		Candles []Candlestick `json:"candles"`
 	}{}
 
 	err := c.get("v1/markets/candles/"+strconv.Itoa(id)+"?", &r, params)
@@ -483,15 +487,80 @@ func (c *Client) GetCandles(id int, start time.Time, end time.Time, interval str
 	return r.Candles, nil
 }
 
+// Gets the port number to which notifications will be streamed
+// See: http://www.questrade.com/api/documentation/streaming
+func (c *Client) GetNotificationStreamPort(useWebSocket bool) (string, error) {
+	mode := "RawSocket"
+	if useWebSocket {
+		mode = "WebSocket"
+	}
+
+	p := struct {
+		Port int `json:"streamPort"`
+	}{}
+
+	err := c.get("v1/notifications?mode="+mode, &p, url.Values{})
+	if err != nil {
+		return "", err
+	}
+
+	return strconv.Itoa(p.Port), nil
+}
+
+// Gets the port number to which quotes will be streamed
+// See: http://www.questrade.com/api/documentation/streaming
+func (c *Client) GetQuoteStreamPort(useWebSocket bool, ids []int) (string, error) {
+	mode := "RawSocket"
+	if useWebSocket {
+		mode = "WebSocket"
+	}
+
+	params := url.Values{}
+	params.Add("mode", mode)
+	params.Add("stream", "true")
+	params.Add("ids", buildIdString(ids))
+
+	p := struct {
+		Port int `json:"streamPort"`
+	}{}
+
+	err := c.get("v1/markets/quotes?", &p, params)
+	if err != nil {
+		return "", err
+	}
+
+	return strconv.Itoa(p.Port), nil
+}
+
+func (c *Client) GetWebSocketConnection(port string) (*websocket.Conn, error) {
+	apiServer := c.Credentials.ApiServer[8 : len(c.Credentials.ApiServer)-1]
+	conn, _, err := websocket.DefaultDialer.Dial("wss://"+apiServer+":"+port, nil)
+	if err != nil {
+		return nil, errors.Wrap(err, "WebSocket failed to connect:\n")
+	}
+
+	err = conn.WriteMessage(websocket.TextMessage, []byte(c.Credentials.AccessToken))
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to send access token:\n")
+	}
+
+	s := struct {
+		Success bool `json:"success"`
+	}{}
+
+	err = conn.ReadJSON(&s)
+	if err != nil {
+		return nil, errors.Wrap(err, "Failed to read server response:\n")
+	}
+
+	return conn, nil
+}
+
 // NewClient is the factory function for clients - takes a refresh token and logs into
 // either the practice or live server.
 func NewClient(refreshToken string, practice bool) (*Client, error) {
-	transport := &http.Transport{
-		ResponseHeaderTimeout: 5 * time.Second,
-	}
-
 	client := &http.Client{
-		Transport: transport,
+		Timeout: 10 * time.Second,
 	}
 
 	// Create a new client
@@ -500,7 +569,6 @@ func NewClient(refreshToken string, practice bool) (*Client, error) {
 			RefreshToken: refreshToken,
 		},
 		httpClient: client,
-		transport:  transport,
 	}
 
 	err := c.Login(practice)
