@@ -209,3 +209,10 @@ type OrderImpact struct {
 	// Estimated average fill price.
 	Price float32 `json:"price"`
 }
+
+// {"orders" : [...], "executions" : [...], "accountNumber" : XXXXXXXX}
+type Notification struct {
+	Orders []Order`json:"orders"`
+	Executions []Execution `json:"executions"`
+	AccountNumber string `json:"accountNumber"`
+}
