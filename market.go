@@ -275,19 +275,6 @@ func (quote *Quote) FillStruct(m map[string]interface{}) error {
 	return nil
 }
 
-type Quotes struct {
-	quotes []interface{} `json:"quotes"`
-}
-
-func (quotes *Quotes) FillStruct(m map[string]interface{}) error {
-	err := mapstructure.Decode(m, &quotes)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 // Candlestick represents historical market data in the form of OHLC candlesticks
 // for a specified symbol.
 type Candlestick struct {
