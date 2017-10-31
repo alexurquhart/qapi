@@ -2,7 +2,6 @@ package qapi
 
 import (
 	"time"
-	"github.com/mitchellh/mapstructure"
 )
 
 // Detailed information about a symbol
@@ -264,15 +263,6 @@ type Quote struct {
 
 	// Whether trading in the symbol is currently halted.
 	IsHalted bool `json:"isHalted"`
-}
-
-func (quote *Quote) FillStruct(m map[string]interface{}) error {
-	err := mapstructure.Decode(m, &quote)
-	if err != nil {
-		return err
-	}
-
-	return nil
 }
 
 // Candlestick represents historical market data in the form of OHLC candlesticks

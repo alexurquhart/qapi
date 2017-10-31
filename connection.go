@@ -2,6 +2,7 @@ package qapi
 
 import (
 	"github.com/gorilla/websocket"
+	"github.com/mitchellh/mapstructure"
 )
 
 type WebsocketConnection struct {
@@ -20,11 +21,11 @@ func (websocketConnection *WebsocketConnection) ReadQuotes() ([]Quote, error) {
 
 	quotesTmp := response.(map[string]interface{})
 	for k, v := range quotesTmp {
-		switch k {
-		case "quotes":
+		if k == "quotes" {
 			for _, item := range v.([]interface{}) {
 				quote := &Quote{}
-				err := quote.FillStruct(item.(map[string]interface{}))
+				// Fill struct quote with item's data
+				err := mapstructure.Decode(item.(map[string]interface{}), &quote)
 				if err != nil {
 					return nil, err
 				}
