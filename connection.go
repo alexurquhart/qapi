@@ -4,11 +4,11 @@ import (
 	"github.com/gorilla/websocket"
 )
 
-type websocketConnection struct {
+type WebsocketConnection struct {
 	Conn *websocket.Conn
 }
 
-func (websocketConnection *websocketConnection) ReadQuotes() ([]Quote, error) {
+func (websocketConnection *WebsocketConnection) ReadQuotes() ([]Quote, error) {
 
 	var response interface{}
 	quotes := []Quote{}

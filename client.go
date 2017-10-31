@@ -532,7 +532,7 @@ func (c *Client) GetQuoteStreamPort(useWebSocket bool, ids []int) (string, error
 	return strconv.Itoa(p.Port), nil
 }
 
-func (c *Client) GetWebSocketConnection(port string) (*websocketConnection, error) {
+func (c *Client) GetWebSocketConnection(port string) (*WebsocketConnection, error) {
 	apiServer := c.Credentials.ApiServer[8 : len(c.Credentials.ApiServer)-1]
 	conn, _, err := websocket.DefaultDialer.Dial("wss://"+apiServer+":"+port, nil)
 	if err != nil {
@@ -553,7 +553,7 @@ func (c *Client) GetWebSocketConnection(port string) (*websocketConnection, erro
 		return nil, errors.Wrap(err, "Failed to read server response:\n")
 	}
 
-	return &websocketConnection{conn}, nil
+	return &WebsocketConnection{conn}, nil
 }
 
 // NewClient is the factory function for clients - takes a refresh token and logs into
