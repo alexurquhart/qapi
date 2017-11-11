@@ -425,7 +425,7 @@ func (c *Client) GetOrderImpact(req OrderRequest) (OrderImpact, error) {
 
 // PlaceOrder submits an order request, or an update to an existing order to Questrade
 // See: http://www.questrade.com/api/documentation/rest-operations/order-calls/accounts-id-orders
-func (c *Client) PlaceOrder(req OrderRequest) ([]Order, error) {
+func (c *Client) PlaceOrder(req OrderRequest) (int, []Order, error) {
 	// Construct the endpoint
 	endpoint := fmt.Sprintf("v1/accounts/%s/orders/", req.AccountID)
 	if req.OrderID != 0 {
@@ -439,9 +439,10 @@ func (c *Client) PlaceOrder(req OrderRequest) ([]Order, error) {
 
 	err := c.post(endpoint, &res, req)
 	if err != nil {
-		return []Order{}, err
+		return -1, []Order{}, err
 	}
-	return res.Orders, nil
+
+	return res.OrderID, res.Orders,  nil
 }
 
 // DeleteOrder - Sends a delete request for the specified order
