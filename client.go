@@ -222,6 +222,33 @@ func (c *Client) GetExecutions(number string, start time.Time, end time.Time) ([
 	return exec.Executions, nil
 }
 
+// GetActivities returns the activities related to a given account between the start and end times.
+// If the times are zero-value, then the API will default the start and end times to the beginning
+// and end of the current day.
+func (c *Client) GetActivities(number string, start time.Time, end time.Time) ([]Activity, error) {
+	// Format the times if they are not zero-values
+	params := url.Values{}
+	if !start.Equal(time.Time{}) {
+		params.Add("startTime", start.Format(time.RFC3339))
+	}
+
+	if !end.Equal(time.Time{}) {
+		params.Add("endTime", end.Format(time.RFC3339))
+	}
+
+	act := struct {
+		Activities []Activity `json:"activities"`
+	}{}
+
+	err := c.get("v1/accounts/"+number+"/activities?", &act, params)
+
+	if err != nil {
+		return []Activity{}, err
+	}
+
+	return act.Activities, nil
+}
+
 // GetOrders returns orders for a specified account. Will return results based on the start and
 // end times, and the order state. Use GetOrdersByID() to retrieve individual order details.
 // If the times are zero-value, then the API will default the start and end times to the beginning
@@ -487,7 +514,7 @@ func (c *Client) GetCandles(id int, start time.Time, end time.Time, interval str
 // either the practice or live server.
 func NewClient(refreshToken string, practice bool) (*Client, error) {
 	transport := &http.Transport{
-		ResponseHeaderTimeout: 5 * time.Second,
+		ResponseHeaderTimeout: 60 * time.Second,
 	}
 
 	client := &http.Client{
