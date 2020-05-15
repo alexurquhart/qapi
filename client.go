@@ -514,7 +514,7 @@ func (c *Client) GetCandles(id int, start time.Time, end time.Time, interval str
 // either the practice or live server.
 func NewClient(refreshToken string, practice bool) (*Client, error) {
 	transport := &http.Transport{
-		ResponseHeaderTimeout: 5 * time.Second,
+		ResponseHeaderTimeout: 60 * time.Second,
 	}
 
 	client := &http.Client{
